@@ -1,9 +1,7 @@
 const Note = require('../models/Note');
-const User = require('../models/User'); // યુઝરના નામ મેળવવા માટે
+const User = require('../models/User'); 
 
-// @desc    Get all notes for a user
-// @route   GET /api/notes
-// @access  Private
+
 const getNotes = async (req, res) => {
     try {
         const notes = await Note.find({ user: req.user._id }).sort({ updatedAt: -1 });
@@ -13,15 +11,13 @@ const getNotes = async (req, res) => {
     }
 };
 
-// @desc    Get single note by ID
-// @route   GET /api/notes/:id
-// @access  Private
+
 const getNoteById = async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
 
         if (note) {
-            // ખાતરી કરો કે યુઝર આ નોંધનો માલિક છે (અથવા એડમિન)
+          
             if (note.user.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
                 return res.status(403).json({ message: 'Not authorized to view this note' });
             }
@@ -34,9 +30,7 @@ const getNoteById = async (req, res) => {
     }
 };
 
-// @desc    Create a new note
-// @route   POST /api/notes
-// @access  Private
+
 const createNote = async (req, res) => {
     const { title, content, tags } = req.body;
 
@@ -49,7 +43,7 @@ const createNote = async (req, res) => {
             user: req.user._id,
             title,
             content,
-            tags: tags || [], // જો ટૅગ્સ ન હોય તો ખાલી એરે આપો
+            tags: tags || [],
         });
 
         const createdNote = await note.save();
@@ -59,9 +53,7 @@ const createNote = async (req, res) => {
     }
 };
 
-// @desc    Update a note
-// @route   PUT /api/notes/:id
-// @access  Private
+
 const updateNote = async (req, res) => {
     const { title, content, tags } = req.body;
 
@@ -69,15 +61,15 @@ const updateNote = async (req, res) => {
         const note = await Note.findById(req.params.id);
 
         if (note) {
-            // ખાતરી કરો કે યુઝર આ નોંધનો માલિક છે (અથવા એડમિન)
+          
             if (note.user.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
                 return res.status(403).json({ message: 'Not authorized to update this note' });
             }
 
-            // રીઅલ-ટાઇમ કોલાબોરેશન લોક ચેક [cite: 12]
+           
             if (note.lockedBy && note.lockedBy.toString() !== req.user._id.toString()) {
                 const lockedByUser = await User.findById(note.lockedBy);
-                return res.status(409).json({ // 409 Conflict
+                return res.status(409).json({
                     message: `Note is currently locked by ${lockedByUser ? lockedByUser.username : 'another user'}.`,
                     lockedBy: lockedByUser ? lockedByUser.username : 'unknown',
                 });
@@ -85,8 +77,8 @@ const updateNote = async (req, res) => {
 
             note.title = title || note.title;
             note.content = content || note.content;
-            note.tags = tags !== undefined ? tags : note.tags; // જો ટૅગ્સ ખાલી મોકલ્યા હોય તો પણ અપડેટ કરો
-            note.lastUpdated = new Date(); // lastUpdated ને મેન્યુઅલી અપડેટ કરો (timestamps દ્વારા પણ થાય છે)
+            note.tags = tags !== undefined ? tags : note.tags; 
+            note.lastUpdated = new Date(); 
 
             const updatedNote = await note.save();
             res.json(updatedNote);
@@ -98,20 +90,18 @@ const updateNote = async (req, res) => {
     }
 };
 
-// @desc    Delete a note
-// @route   DELETE /api/notes/:id
-// @access  Private
+
 const deleteNote = async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
 
         if (note) {
-            // ખાતરી કરો કે યુઝર આ નોંધનો માલિક છે (અથવા એડમિન)
+         
             if (note.user.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
                 return res.status(403).json({ message: 'Not authorized to delete this note' });
             }
 
-            // રીઅલ-ટાઇમ કોલાબોરેશન લોક ચેક (ડિલીટ કરતા પહેલા)
+            
             if (note.lockedBy && note.lockedBy.toString() !== req.user._id.toString()) {
                 const lockedByUser = await User.findById(note.lockedBy);
                 return res.status(409).json({
@@ -120,7 +110,7 @@ const deleteNote = async (req, res) => {
                 });
             }
 
-            await note.deleteOne(); // Mongoose 6+ માં .remove() ને બદલે .deleteOne()
+            await note.deleteOne(); 
             res.json({ message: 'Note removed' });
         } else {
             res.status(404).json({ message: 'Note not found' });

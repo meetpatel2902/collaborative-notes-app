@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AuthForm from '../components/AuthForm';
 
@@ -8,10 +8,14 @@ const SignupPage = () => {
     const navigate = useNavigate();
     const { signup } = useAuth();
 
-    const handleSignup = async (username, email, password) => {
+    const handleSignup = async (username, email, password, isAdmin, superAdminKey) => {
         try {
-            await signup(username, email, password);
-            navigate('/'); // સફળ સાઇનઅપ પર ડેશબોર્ડ પર રીડાયરેક્ટ કરો
+            const userData = await signup(username, email, password, isAdmin, superAdminKey);
+            if (userData.role === 'Admin') {
+                navigate('/admin/users'); 
+            } else {
+                navigate('/');
+            }
         } catch (error) {
             setErrorMessage(error.response?.data?.message || 'Signup failed. Please try again.');
         }
@@ -20,9 +24,6 @@ const SignupPage = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <AuthForm type="signup" onSubmit={handleSignup} errorMessage={errorMessage} />
-            <div className="absolute bottom-4 text-gray-600">
-                Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
-            </div>
         </div>
     );
 };

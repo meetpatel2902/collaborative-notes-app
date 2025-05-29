@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import noteService from '../services/noteService'; // noteService માં admin ફંક્શન ઉમેરો
+import noteService from '../services/noteService';
 
 const AdminPanelPage = () => {
     const [usersWithNotes, setUsersWithNotes] = useState([]);
@@ -14,7 +14,7 @@ const AdminPanelPage = () => {
                 setUsersWithNotes(data);
                 setLoading(false);
             } catch (err) {
-                console.error('Error fetching admin data:', err);
+                console.error(err);
                 setError(err.response?.data?.message || 'Failed to fetch admin data. Access denied.');
                 setLoading(false);
             }

@@ -33,7 +33,7 @@ const DashboardPage = () => {
         try {
             const newTags = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
             const newNote = await noteService.createNote({ title, content, tags: newTags });
-            setNotes([newNote, ...notes]); // નવી નોટને ટોચ પર ઉમેરો
+            setNotes([newNote, ...notes]); 
             setTitle('');
             setContent('');
             setTags('');

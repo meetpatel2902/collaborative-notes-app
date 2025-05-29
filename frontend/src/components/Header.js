@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-
 const Header = () => {
     const { user, logout } = useAuth();
 
@@ -12,10 +11,10 @@ const Header = () => {
                     MERN Notes App
                 </Link>
                 <div className="flex items-center space-x-4">
-                    {user ? (
+                    {user ? ( 
                         <>
                             <span className="text-lg">Welcome, {user.username}!</span>
-                            {user.role === 'Admin' && (
+                            {user.role === 'Admin' && ( 
                                 <Link to="/admin/users" className="hover:text-blue-200">
                                     Admin Panel
                                 </Link>

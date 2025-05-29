@@ -1,230 +1,208 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect,  } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import noteService from '../services/noteService';
 import { useAuth } from '../hooks/useAuth';
+import io from 'socket.io-client'; // Socket.IO ક્લાયંટ ઇમ્પોર્ટ કરો
 
-// Socket.IO ક્લાયંટને બેકએન્ડ URL સાથે કનેક્ટ કરો
-const socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000');
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const socket = io(API_BASE_URL, {
+    autoConnect: false, // મેન્યુઅલ કનેક્શન માટે
+    withCredentials: true, // કૂકીઝ મોકલવા માટે
+});
 
 const NoteEditorPage = () => {
-    const { id: noteId } = useParams(); // URL માંથી નોટ ID મેળવો
+    const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth(); // પ્રમાણિત યુઝર ડેટા મેળવો
-
-    const [note, setNote] = useState(null);
+    const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [tags, setTags] = useState([]);
-    const [editingLocked, setEditingLocked] = useState(false); // શું નોટ લોક થયેલી છે
-    const [lockedByOther, setLockedByOther] = useState(null); // કોના દ્વારા લોક થયેલી છે (અન્ય યુઝર)
-    const [currentEditors, setCurrentEditors] = useState([]); // નોટ પર હાલમાં કોણ છે
-    const [saveStatus, setSaveStatus] = useState(''); // સેવિંગ સ્ટેટસ
-
-    // રીઅલ-ટાઇમ અપડેટ્સ માટે ref નો ઉપયોગ કરો જેથી સ્ટેટ અપડેટ કર્યા વિના સોકેટ ઇવેન્ટ મોકલી શકાય
-    const contentRef = useRef('');
-    const titleRef = useRef('');
-    const tagsRef = useRef([]);
+    const [tags, setTags] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [collaborators, setCollaborators] = useState({}); // કયા યુઝર્સ એડિટ કરી રહ્યા છે
+    const [currentEditor, setCurrentEditor] = useState(null); // હાલમાં કોણ એડિટ કરી રહ્યું છે
 
     useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
         const fetchNote = async () => {
-            try {
-                const fetchedNote = await noteService.getNoteById(noteId);
-                setNote(fetchedNote);
-                setTitle(fetchedNote.title);
-                setContent(fetchedNote.content);
-                setTags(fetchedNote.tags || []);
-                contentRef.current = fetchedNote.content;
-                titleRef.current = fetchedNote.title;
-                tagsRef.current = fetchedNote.tags || [];
-
-                // જો નોટ પહેલાથી લોક હોય તો UI અપડેટ કરો
-                if (fetchedNote.lockedBy && fetchedNote.lockedBy !== user._id) {
-                    setEditingLocked(true);
-                    // બેકએન્ડને લોક કરનારનું નામ પૂછવા માટે કૉલ કરવો પડી શકે છે
-                    // અથવા તેને Socket.IO ઇવેન્ટ દ્વારા મેળવો
-                } else {
-                    setEditingLocked(false);
+            if (id) {
+                try {
+                    const note = await noteService.getNoteById(id);
+                    setTitle(note.title);
+                    setContent(note.content);
+                    setTags(note.tags ? note.tags.join(', ') : '');
+                } catch (err) {
+                    setError(err.response?.data?.message || 'Failed to fetch note.');
                 }
-
-            } catch (error) {
-                console.error('Error fetching note:', error);
-                alert('Failed to load note. It might not exist or you do not have access.');
-                navigate('/'); // નોટ ન મળે તો ડેશબોર્ડ પર રીડાયરેક્ટ કરો
             }
+            setLoading(false);
         };
 
         fetchNote();
 
-        // Socket.IO ઇવેન્ટ લિસનર્સ
-        if (user) {
-            socket.emit('joinNote', { noteId, userId: user._id, username: user.username });
-        }
+        // Socket.IO કનેક્શન અને ઇવેન્ટ હેન્ડલર્સ
+        if (id && user) {
+            socket.connect(); // કનેક્ટ કરો
+            socket.emit('start_editing', id, user.username);
 
-        socket.on('noteUpdated', (updatedNote) => {
-            if (updatedNote._id === noteId) {
-                setNote(updatedNote);
-                setTitle(updatedNote.title);
-                setContent(updatedNote.content);
-                setTags(updatedNote.tags || []);
-                contentRef.current = updatedNote.content;
-                titleRef.current = updatedNote.title;
-                tagsRef.current = updatedNote.tags || [];
-                setSaveStatus('Saved!');
-                setTimeout(() => setSaveStatus(''), 1000); // 1 સેકન્ડ પછી સ્ટેટસ સાફ કરો
-            }
-        });
-
-        socket.on('noteLocked', ({ noteId: lockedNoteId, userId: lockerId, username: lockerUsername }) => {
-            if (lockedNoteId === noteId) {
-                if (lockerId === user._id) {
-                    setEditingLocked(false); // હું લોક કરનાર છું
-                    setLockedByOther(null);
-                } else {
-                    setEditingLocked(true); // કોઈ અન્ય લોક કરનાર છે
-                    setLockedByOther(lockerUsername);
+            socket.on('user_editing', (noteId, username) => {
+                if (username !== user.username) {
+                    setCollaborators(prev => ({ ...prev, [username]: true }));
+                    setCurrentEditor(username);
                 }
-            }
-        });
-
-        socket.on('noteUnlocked', ({ noteId: unlockedNoteId }) => {
-            if (unlockedNoteId === noteId) {
-                setEditingLocked(false);
-                setLockedByOther(null);
-            }
-        });
-
-        socket.on('noteLockedByOther', ({ noteId: lockedNoteId, lockedBy }) => {
-            if (lockedNoteId === noteId) {
-                setEditingLocked(true);
-                setLockedByOther(lockedBy);
-                // alert(`Note is currently being edited by ${lockedBy}. Your edits are disabled.`);
-            }
-        });
-
-        socket.on('currentEditorsUpdate', ({ noteId: editorNoteId, editors }) => {
-            if (editorNoteId === noteId) {
-                // ફક્ત અન્ય એડિટર્સને દર્શાવો
-                setCurrentEditors(editors.filter(editor => editor !== user.username));
-            }
-        });
-
-        // કમ્પોનન્ટ અનમાઉન્ટ થાય ત્યારે ક્લિનઅપ કરો
-        return () => {
-            if (user) {
-                socket.emit('leaveNote', { noteId, userId: user._id, username: user.username });
-                socket.emit('stopEditing', { noteId, userId: user._id }); // લોક છોડો
-            }
-            socket.off('noteUpdated');
-            socket.off('noteLocked');
-            socket.off('noteUnlocked');
-            socket.off('noteLockedByOther');
-            socket.off('currentEditorsUpdate');
-        };
-    }, [noteId, user, navigate]); // dependency array
-
-    // ઇનપુટ ફિલ્ડ્સમાં ફેરફાર હેન્ડલ કરો
-    const handleChange = (e, field) => {
-        const value = e.target.value;
-        if (field === 'title') {
-            setTitle(value);
-            titleRef.current = value;
-        } else if (field === 'content') {
-            setContent(value);
-            contentRef.current = value;
-        } else if (field === 'tags') {
-            const newTags = value.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
-            setTags(newTags);
-            tagsRef.current = newTags;
-        }
-
-        // જો લોક ન હોય અને યુઝર હાજર હોય તો જ સોકેટ ઇવેન્ટ મોકલો
-        if (!editingLocked && user) {
-            socket.emit('startEditing', { noteId, userId: user._id, username: user.username });
-            socket.emit('noteContentChange', {
-                noteId,
-                newTitle: titleRef.current,
-                newContent: contentRef.current,
-                newTags: tagsRef.current,
-                userId: user._id // યુઝર ID પણ મોકલો જેથી બેકએન્ડ ચેક કરી શકે કે યુઝર પાસે લોક છે
             });
+
+            socket.on('user_stopped_editing', (noteId, username) => {
+                if (username !== user.username) {
+                    setCollaborators(prev => {
+                        const newCollaborators = { ...prev };
+                        delete newCollaborators[username];
+                        return newCollaborators;
+                    });
+                    setCurrentEditor(null);
+                }
+            });
+
+            socket.on('update_note_content', (noteId, newContent) => {
+                if (noteId === id && content !== newContent) { // પોતાની એડિટને અવગણો
+                    setContent(newContent);
+                }
+            });
+
+            // જ્યારે કનેક્શન ડિસ્કનેક્ટ થાય
+            return () => {
+                socket.emit('stop_editing', id, user.username);
+                socket.disconnect();
+                socket.off('user_editing');
+                socket.off('user_stopped_editing');
+                socket.off('update_note_content');
+            };
+        }
+
+    }, [id, user, navigate, content]);
+
+   
+    const handleContentChange = (e) => {
+        const newContent = e.target.value;
+        setContent(newContent);
+        if (socket.connected) {
+            socket.emit('note_content_change', id, newContent);
         }
     };
 
-    // જ્યારે યુઝર ઇનપુટ પર ફોકસ કરે ત્યારે એડિટિંગ શરૂ કરો
-    const handleFocus = () => {
-        if (user) {
-            socket.emit('startEditing', { noteId, userId: user._id, username: user.username });
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const noteData = {
+                title,
+                content,
+                tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+            };
+
+            if (id) {
+                await noteService.updateNote(id, noteData);
+                alert('Note updated successfully!');
+            } else {
+                await noteService.createNote(noteData);
+                alert('Note created successfully!');
+                navigate('/');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to save note.');
         }
     };
 
-    // જ્યારે યુઝર ઇનપુટ પરથી ફોકસ હટાવે ત્યારે એડિટિંગ બંધ કરો
-    const handleBlur = () => {
-        if (user) {
-            socket.emit('stopEditing', { noteId, userId: user._id });
-        }
-    };
-
-
-    if (!note) {
+    if (loading) {
         return <div className="text-center mt-8">Loading note...</div>;
     }
 
-    return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-3xl font-bold mb-4">Edit Note</h1>
-            {saveStatus && <p className="text-green-500 mb-2">{saveStatus}</p>}
-            {editingLocked && lockedByOther && (
-                <p className="text-red-500 mb-2">
-                    <strong className="font-semibold">{lockedByOther}</strong> is currently editing this note. Your edits are disabled.
-                </p>
-            )}
-            {currentEditors.length > 0 && (
-                <p className="text-blue-500 mb-2">
-                    Other users viewing/editing: {currentEditors.join(', ')}
-                </p>
-            )}
+    if (error) {
+        return <div className="text-center mt-8 text-red-600">Error: {error}</div>;
+    }
 
-            <div className="mb-4">
-                <label htmlFor="title" className="block text-gray-700 text-sm font-bold mb-2">Title:</label>
-                <input
-                    type="text"
-                    id="title"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={title}
-                    onChange={(e) => handleChange(e, 'title')}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    disabled={editingLocked}
-                    maxLength={100}
-                />
-            </div>
-            <div className="mb-4">
-                <label htmlFor="content" className="block text-gray-700 text-sm font-bold mb-2">Content:</label>
-                <textarea
-                    id="content"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-64"
-                    value={content}
-                    onChange={(e) => handleChange(e, 'content')}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    disabled={editingLocked}
-                    maxLength={1000}
-                ></textarea>
-            </div>
-            <div className="mb-4">
-                <label htmlFor="tags" className="block text-gray-700 text-sm font-bold mb-2">Tags (comma-separated):</label>
-                <input
-                    type="text"
-                    id="tags"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={tags.join(', ')}
-                    onChange={(e) => handleChange(e, 'tags')}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    disabled={editingLocked}
-                />
-            </div>
+    const otherCollaborators = Object.keys(collaborators).filter(collab => collab !== user.username);
+
+    return (
+        <div className="container mx-auto p-4 max-w-2xl">
+            <h1 className="text-3xl font-bold mb-6 text-center">{id ? 'Edit Note' : 'Create Note'}</h1>
+            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4">
+                <div>
+                    <label htmlFor="title" className="block text-gray-700 text-sm font-bold mb-2">Title:</label>
+                    <input
+                        type="text"
+                        id="title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required
+                        maxLength="100"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="content" className="block text-gray-700 text-sm font-bold mb-2">Content:</label>
+                    <textarea
+                        id="content"
+                        value={content}
+                        onChange={handleContentChange}
+                        rows="10"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required
+                        maxLength="1000"
+                    ></textarea>
+                </div>
+                <div>
+                    <label htmlFor="tags" className="block text-gray-700 text-sm font-bold mb-2">Tags (comma separated):</label>
+                    <input
+                        type="text"
+                        id="tags"
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="e.g., work, personal, important"
+                    />
+                </div>
+
+                {id && (
+                    <div className="mt-4 text-sm text-gray-600">
+                        {currentEditor && currentEditor !== user.username && (
+                            <p className="font-semibold text-blue-600">
+                                {currentEditor} is currently editing this note.
+                            </p>
+                        )}
+                        {otherCollaborators.length > 0 && (
+                            <p>
+                                Other collaborators: {otherCollaborators.join(', ')}
+                            </p>
+                        )}
+                        {!currentEditor && otherCollaborators.length === 0 && (
+                            <p>No one else is currently editing this note.</p>
+                        )}
+                    </div>
+                )}
+
+
+                <div className="flex items-center justify-between mt-6">
+                    <button
+                        type="submit"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                        {id ? 'Update Note' : 'Create Note'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/')}
+                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };

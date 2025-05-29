@@ -5,15 +5,14 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // લોડિંગ સ્ટેટ
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // જ્યારે કમ્પોનન્ટ માઉન્ટ થાય, ત્યારે લોકલસ્ટોરેજમાંથી યુઝર મેળવો
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
-        setLoading(false); // લોડિંગ પૂર્ણ થયું
+        setLoading(false);
     }, []);
 
     const login = async (email, password) => {
@@ -22,8 +21,8 @@ export const AuthProvider = ({ children }) => {
         return userData;
     };
 
-    const signup = async (username, email, password) => {
-        const userData = await authService.signup(username, email, password);
+    const signup = async (username, email, password, isAdmin, superAdminKey) => {
+        const userData = await authService.signup(username, email, password, isAdmin, superAdminKey);
         setUser(userData);
         return userData;
     };
@@ -35,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
-            {!loading && children} {/* જ્યારે લોડિંગ સમાપ્ત થાય ત્યારે જ ચિલ્ડ્રનને રેન્ડર કરો */}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

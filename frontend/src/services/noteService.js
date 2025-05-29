@@ -30,7 +30,6 @@ const getAdminUsersAndNotes = async () => {
     return response.data;
 };
 
-
 const noteService = {
     getNotes,
     getNoteById,

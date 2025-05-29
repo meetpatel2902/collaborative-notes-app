@@ -1,23 +1,28 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// JWT ટોકન દ્વારા યુઝરને સુરક્ષિત (authenticate) કરવા માટેનું મિડલવેર
-const protect = async (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET is not defined in .env file.');
+    process.exit(1);
+}
+
+exports.protect = async (req, res, next) => {
     let token;
 
-    // HTTP હેડરમાંથી Bearer ટોકન તપાસો
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // 'Bearer' પછીનો ટોકન મેળવો
             token = req.headers.authorization.split(' ')[1];
 
-            // ટોકનને JWT_SECRET વડે વેરીફાઈ કરો
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, JWT_SECRET);
 
-            // ટોકનમાંથી યુઝર ID મેળવો અને પાસવર્ડ વિના યુઝર શોધો
             req.user = await User.findById(decoded.id).select('-password');
+            if (!req.user) {
+                return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
 
-            next(); // આગળના મિડલવેર/રાઉટ હેન્ડલર પર જાઓ
+            next();
         } catch (error) {
             console.error(error);
             res.status(401).json({ message: 'Not authorized, token failed' });
@@ -29,14 +34,10 @@ const protect = async (req, res, next) => {
     }
 };
 
-// યુઝર એડમિન છે કે નહીં તે તપાસવા માટેનું મિડલવેર [cite: 2]
-const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'Admin')
-         { 
-        next(); // એડમિન હોય તો આગળ વધો
+exports.checkAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'Admin') {
+        next();
     } else {
         res.status(403).json({ message: 'Not authorized as an admin' });
     }
 };
-
-module.exports = { protect, admin };
