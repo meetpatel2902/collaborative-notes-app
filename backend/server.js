@@ -15,11 +15,10 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// અહીં તમારી CORS ની વ્યાખ્યા છે
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL,
-        'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app' // અહીં તમારો નવો ચોક્કસ Vercel URL ઉમેરો
+        'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app' 
     ],
     credentials: true,
     optionsSuccessStatus: 200
@@ -41,7 +40,7 @@ const io = new Server(server, {
     cors: {
         origin: [
             process.env.FRONTEND_URL,
-            'https://collaborative-notes-3d6sjjqm0-meetpatel2902s-projects.vercel.app' 
+            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app' 
         ],
         methods: ['GET', 'POST'],
         credentials: true
