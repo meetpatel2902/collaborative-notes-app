@@ -11,6 +11,8 @@ import NoteEditorPage from './pages/NoteEditorPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+
+
 function App() {
     return (
         <Router>
@@ -34,5 +36,6 @@ function App() {
         </Router>
     );
 }
+
 
 export default App;
