@@ -20,7 +20,7 @@ const corsOptions = {
         process.env.FRONTEND_URL,
         'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app', 
         'https://collaborative-notes-in2v6t6bj-meetpatel2902s-projects.vercel.app', 
-        'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app' 
+        'https://collaborative-notes-qrj13ho05-meetpatel2902s-projects.vercel.app' 
     ],
     credentials: true,
     optionsSuccessStatus: 200
