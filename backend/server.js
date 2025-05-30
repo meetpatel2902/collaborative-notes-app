@@ -18,8 +18,8 @@ const server = http.createServer(app);
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL,
-        'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app', 
-        'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app', 
+        'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app', 
+        'https://collaborative-notes-in2v6t6bj-meetpatel2902s-projects.vercel.app', 
         'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app' 
     ],
     credentials: true,
