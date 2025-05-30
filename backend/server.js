@@ -10,14 +10,13 @@ dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
 const noteRoutes = require('./routes/noteRoutes');
-const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
-    origin: [process.env.FRONTEND_URL, 'https://your-vercel-frontend-url.vercel.app'],
+    origin: [process.env.FRONTEND_URL, 'https://collaborative-notes-26s16hrkv-meetpatel2902s-projects.vercel.app'],
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -37,7 +36,7 @@ app.use('/api/admin', adminRoutes);
 
 const io = new Server(server, {
     cors: {
-        origin: [process.env.FRONTEND_URL, 'https://collaborative-notes-26s16hrkv-meetpatel2902s-projects.vercel.app'],
+        origin: [process.env.FRONTEND_URL, 'https://your-vercel-frontend-url.vercel.app'],
         methods: ['GET', 'POST'],
         credentials: true
     }
