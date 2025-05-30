@@ -40,7 +40,8 @@ const io = new Server(server, {
     cors: {
         origin: [
             process.env.FRONTEND_URL,
-            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app' 
+            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app',
+            'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app' 
         ],
         methods: ['GET', 'POST'],
         credentials: true
