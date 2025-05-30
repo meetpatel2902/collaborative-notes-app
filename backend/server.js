@@ -15,8 +15,12 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
 
+
 const corsOptions = {
-    origin: [process.env.FRONTEND_URL, 'https://collaborative-notes-26s16hrkv-meetpatel2902s-projects.vercel.app'],
+    origin: [
+        process.env.FRONTEND_URL,
+        'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app' 
+    ],
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -31,11 +35,15 @@ mongoose.connect(process.env.MONGO_URI)
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 
 const io = new Server(server, {
     cors: {
-        origin: [process.env.FRONTEND_URL, 'https://your-vercel-frontend-url.vercel.app'],
+        origin: [
+            process.env.FRONTEND_URL,
+            'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app' // અહીં પણ તમારો ચોક્કસ Vercel URL ઉમેરો
+        ],
         methods: ['GET', 'POST'],
         credentials: true
     }
