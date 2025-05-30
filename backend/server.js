@@ -10,7 +10,7 @@ dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
 const noteRoutes = require('./routes/noteRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const adminRoutes = require('./routes/adminRoutes'); 
 
 const app = express();
 const server = http.createServer(app);
@@ -18,7 +18,9 @@ const server = http.createServer(app);
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL,
-        'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app' 
+        'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app', 
+        'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app', 
+        'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app' 
     ],
     credentials: true,
     optionsSuccessStatus: 200
@@ -40,8 +42,9 @@ const io = new Server(server, {
     cors: {
         origin: [
             process.env.FRONTEND_URL,
-            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app',
-            'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app' 
+            'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app', 
+            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app', 
+            'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app'  
         ],
         methods: ['GET', 'POST'],
         credentials: true
