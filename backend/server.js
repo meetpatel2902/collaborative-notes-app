@@ -18,6 +18,7 @@ const server = http.createServer(app);
 const corsOptions = {
     origin: [
         'https://collaborative-notes-62xgjylqe-meetpatel2902s-projects.vercel.app',
+         'https://collaborative-notes-nq45j90c1-meetpatel2902s-projects.vercel.app',
         'http://localhost:3000' 
     ],
     credentials: true,
@@ -41,6 +42,7 @@ const io = new Server(server, {
     cors: {
         origin: [
             'https://collaborative-notes-62xgjylqe-meetpatel2902s-projects.vercel.app',
+             'https://collaborative-notes-nq45j90c1-meetpatel2902s-projects.vercel.app',
             'http://localhost:3000' 
         ],
         methods: ['GET', 'POST'],
