@@ -2,12 +2,12 @@ import React, { useState, useEffect,  } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import noteService from '../services/noteService';
 import { useAuth } from '../hooks/useAuth';
-import io from 'socket.io-client'; // Socket.IO ક્લાયંટ ઇમ્પોર્ટ કરો
+import io from 'socket.io-client'; 
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 const socket = io(API_BASE_URL, {
-    autoConnect: false, // મેન્યુઅલ કનેક્શન માટે
-    withCredentials: true, // કૂકીઝ મોકલવા માટે
+    autoConnect: false, 
+    withCredentials: true, 
 });
 
 const NoteEditorPage = () => {
@@ -19,8 +19,8 @@ const NoteEditorPage = () => {
     const [tags, setTags] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [collaborators, setCollaborators] = useState({}); // કયા યુઝર્સ એડિટ કરી રહ્યા છે
-    const [currentEditor, setCurrentEditor] = useState(null); // હાલમાં કોણ એડિટ કરી રહ્યું છે
+    const [collaborators, setCollaborators] = useState({}); 
+    const [currentEditor, setCurrentEditor] = useState(null); 
 
     useEffect(() => {
         if (!user) {
@@ -44,9 +44,9 @@ const NoteEditorPage = () => {
 
         fetchNote();
 
-        // Socket.IO કનેક્શન અને ઇવેન્ટ હેન્ડલર્સ
+       
         if (id && user) {
-            socket.connect(); // કનેક્ટ કરો
+            socket.connect(); 
             socket.emit('start_editing', id, user.username);
 
             socket.on('user_editing', (noteId, username) => {
@@ -68,12 +68,12 @@ const NoteEditorPage = () => {
             });
 
             socket.on('update_note_content', (noteId, newContent) => {
-                if (noteId === id && content !== newContent) { // પોતાની એડિટને અવગણો
+                if (noteId === id && content !== newContent) { 
                     setContent(newContent);
                 }
             });
 
-            // જ્યારે કનેક્શન ડિસ્કનેક્ટ થાય
+            
             return () => {
                 socket.emit('stop_editing', id, user.username);
                 socket.disconnect();
