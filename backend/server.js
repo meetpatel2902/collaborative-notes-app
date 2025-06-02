@@ -10,17 +10,14 @@ dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
 const noteRoutes = require('./routes/noteRoutes');
-const adminRoutes = require('./routes/adminRoutes'); 
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
     origin: [
-        process.env.FRONTEND_URL,
-        'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app', 
-        'https://collaborative-notes-in2v6t6bj-meetpatel2902s-projects.vercel.app', 
-        'https://collaborative-notes-qrj13ho05-meetpatel2902s-projects.vercel.app' 
+        'http://localhost:3000' 
     ],
     credentials: true,
     optionsSuccessStatus: 200
@@ -29,6 +26,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB connected'))
@@ -41,10 +39,7 @@ app.use('/api/admin', adminRoutes);
 const io = new Server(server, {
     cors: {
         origin: [
-            process.env.FRONTEND_URL,
-            'https://collaborative-notes-lqm5t6qx-meetpatel2902s-projects.vercel.app', 
-            'https://collaborative-notes-3d6sjiqm0-meetpatel2902s-projects.vercel.app', 
-            'https://collaborative-notes-oi9a5wvv8-meetpatel2902s-projects.vercel.app'  
+            'http://localhost:3000' 
         ],
         methods: ['GET', 'POST'],
         credentials: true
@@ -71,5 +66,5 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
