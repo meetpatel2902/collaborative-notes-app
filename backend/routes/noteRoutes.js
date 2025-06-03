@@ -5,14 +5,17 @@ const {
     createNote,
     updateNote,
     deleteNote,
-} = require('../controllers/noteController');
-const { protect } = require('../middlewares/authMiddleware');
+} = require('../controllers/noteController'); 
+console.log('getNotes:', getNotes);
+const { protect, checkAdmin } = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
-
-router.route('/').get(protect, getNotes).post(protect, createNote);
-
-
-router.route('/:id').get(protect, getNoteById).put(protect, updateNote).delete(protect, deleteNote);
-
+router.route('/')
+    .get(protect, getNotes) 
+    .post(protect, createNote);
+router.route('/:id')
+    .get(protect, getNoteById) 
+    .put(protect, updateNote) 
+    .delete(protect, deleteNote); 
 module.exports = router;

@@ -1,15 +1,39 @@
 const mongoose = require('mongoose');
 
 const noteSchema = new mongoose.Schema({
-    title: { type: String, required: true, maxlength: 100 },
-    content: { type: String, required: true, maxlength: 1000 },
-    tags: [{ type: String }],
-    user: {
+    owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
     },
-}, { timestamps: true });
+    title: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    content: {
+        type: String,
+        required: true,
+    },
+    tags: {
+        type: [String],
+        default: [],
+    },
+    isPublic: { 
+        type: Boolean,
+        default: false,
+    },
+    collaborators: [{ 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
+    lockedBy: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+    },
+}, {
+    timestamps: true 
+});
 
-const Note = mongoose.model('Note', noteSchema);
-module.exports = Note;
+module.exports = mongoose.models.Note || mongoose.model('Note', noteSchema);
