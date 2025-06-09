@@ -4,7 +4,6 @@ import io from 'socket.io-client';
 import noteService from '../services/noteService';
 import { useAuth } from '../hooks/useAuth';
 
-// Socket.IO URL ને બેકએન્ડ Render URL સાથે બદલો
 const socket = io('https://collaborative-notes-backend.onrender.com', { withCredentials: true });
 
 function NoteEditPage() {
@@ -41,13 +40,14 @@ function NoteEditPage() {
     };
     fetchNote();
 
-    // Socket.IO ઇવેન્ટ્સ
+   
     if (user && user.id && user.username) {
       socket.emit('start_editing', { noteId: id, userId: user.id, userName: user.username });
 
       socket.on('user_editing', ({ noteId, userId, userName }) => {
         if (noteId === id) {
           setEditingUsers((prev) => {
+            
             if (prev.some((u) => u.userId === userId)) return prev;
             return [...prev, { userId, userName }];
           });
@@ -83,8 +83,9 @@ function NoteEditPage() {
 
   const handleSave = async () => {
     try {
+     
       const collaboratorIds = collaborators
-        .filter((collab) => collab._id)
+        .filter((collab) => collab._id) 
         .map((collab) => collab._id);
 
       await noteService.updateNote(id, {
@@ -149,7 +150,7 @@ function NoteEditPage() {
         <div className="mb-4">
           <label className="block text-gray-700 font-semibold mb-2">Visibility</label>
           <select
-            value={isPublic.toString()}
+            value={isPublic.toString()} 
             onChange={(e) => setIsPublic(e.target.value === 'true')}
             className="w-full p-2 border rounded"
           >
@@ -168,6 +169,7 @@ function NoteEditPage() {
             onChange={async (e) => {
               const usernames = e.target.value.split(',').map((u) => u.trim());
               try {
+               
                 const response = await fetch(
                   'https://collaborative-notes-backend.onrender.com/api/users/usernames-to-ids',
                   {
