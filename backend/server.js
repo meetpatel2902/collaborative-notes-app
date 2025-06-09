@@ -20,6 +20,7 @@ const corsOptions = {
         'https://collaborative-notes-62xgjylqe-meetpatel2902s-projects.vercel.app',
          'https://collaborative-notes-nq45j90c1-meetpatel2902s-projects.vercel.app',
           'https://collaborative-notes-vntwlzwca-meetpatel2902s-projects.vercel.app',
+          'https://collaborative-notes-cyce9x9h7-meetpatel2902s-projects.vercel.app',
         'http://localhost:3000' 
     ],
     credentials: true,
@@ -42,6 +43,7 @@ app.use('/api/admin', adminRoutes);
 const io = new Server(server, {
     cors: {
         origin: [
+              'https://collaborative-notes-cyce9x9h7-meetpatel2902s-projects.vercel.app',
               'https://collaborative-notes-62xgjylqe-meetpatel2902s-projects.vercel.app',
               'https://collaborative-notes-nq45j90c1-meetpatel2902s-projects.vercel.app',
               'https://collaborative-notes-vntwlzwca-meetpatel2902s-projects.vercel.app',
