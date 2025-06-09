@@ -1,19 +1,15 @@
-// backend/controllers/noteController.js
+const express = require('express');
 const Note = require('../models/Note');
-<<<<<<< HEAD
 
-exports.getNotes = async (req, res) => {
-    try {
-        const notes = await Note.find({ user: req.user.id });
-        res.json(notes);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
+
+const express = require('express');
+const Note = require('../models/Note');
 const User = require('../models/User');
 
+// Get all notes (with population)
 exports.getNotes = async (req, res) => {
     try {
-         const notes = await Note.find()
+        const notes = await Note.find()
             .populate('owner', 'username')
             .populate('collaborators', 'username')
             .sort({ updatedAt: -1 });
@@ -21,24 +17,12 @@ exports.getNotes = async (req, res) => {
     } catch (error) {
         console.error('Error in getNotes:', error); 
         res.status(500).json({ message: error.message });
->>>>>>> 26c5641088948f08b786bad3489b6a599a7c3caf
     }
 };
 
+// Get note by ID (with population and authorization)
 exports.getNoteById = async (req, res) => {
     try {
-<<<<<<< HEAD
-        const note = await Note.findById(req.params.id);
-        if (!note) {
-            return res.status(404).json({ message: 'Note not found' });
-        }
-        if (note.user.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
-        }
-        res.json(note);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
         const note = await Note.findById(req.params.id)
             .populate('owner', 'username')
             .populate('collaborators', 'username');
@@ -47,7 +31,6 @@ exports.getNoteById = async (req, res) => {
             return res.status(404).json({ message: 'Note not found' });
         }
 
-       
         const isOwner = note.owner.toString() === req.user._id.toString();
         const isCollaborator = note.collaborators.some(collabId => collabId.toString() === req.user._id.toString());
 
@@ -59,25 +42,11 @@ exports.getNoteById = async (req, res) => {
     } catch (error) {
         console.error('Error in getNoteById:', error); 
         res.status(500).json({ message: error.message });
->>>>>>> 26c5641088948f08b786bad3489b6a599a7c3caf
     }
 };
 
+// Create a new note
 exports.createNote = async (req, res) => {
-<<<<<<< HEAD
-    const { title, content, tags } = req.body;
-    try {
-        const note = new Note({
-            title,
-            content,
-            tags,
-            user: req.user.id
-        });
-        await note.save();
-        res.status(201).json(note);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
     const { title, content, tags, isPublic, collaborators } = req.body;
 
     if (!title || !content) {
@@ -106,30 +75,11 @@ exports.createNote = async (req, res) => {
             return res.status(400).json({ message: 'A note with this title already exists.' });
         }
         res.status(500).json({ message: error.message });
->>>>>>> 26c5641088948f08b786bad3489b6a599a7c3caf
     }
 };
 
+// Update a note
 exports.updateNote = async (req, res) => {
-<<<<<<< HEAD
-    const { title, content, tags } = req.body;
-    try {
-        const note = await Note.findById(req.params.id);
-        if (!note) {
-            return res.status(404).json({ message: 'Note not found' });
-        }
-        if (note.user.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
-        }
-        note.title = title || note.title;
-        note.content = content || note.content;
-        note.tags = tags || note.tags;
-        note.lastUpdated = Date.now();
-        await note.save();
-        res.json(note);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
     const { title, content, tags, isPublic, collaborators } = req.body;
 
     try {
@@ -180,25 +130,13 @@ exports.updateNote = async (req, res) => {
             return res.status(400).json({ message: 'A note with this title already exists.' });
         }
         res.status(500).json({ message: error.message });
->>>>>>> 26c5641088948f08b786bad3489b6a599a7c3caf
     }
 };
 
+// Delete a note
 exports.deleteNote = async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
-<<<<<<< HEAD
-        if (!note) {
-            return res.status(404).json({ message: 'Note not found' });
-        }
-        if (note.user.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
-        }
-        await note.remove();
-        res.json({ message: 'Note deleted' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
 
         if (!note) {
             return res.status(404).json({ message: 'Note not found' });
@@ -221,6 +159,5 @@ exports.deleteNote = async (req, res) => {
     } catch (error) {
         console.error('Error in deleteNote:', error); 
         res.status(500).json({ message: error.message });
->>>>>>> 26c5641088948f08b786bad3489b6a599a7c3caf
     }
 };
