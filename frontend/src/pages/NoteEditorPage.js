@@ -7,7 +7,6 @@ import { useAuth } from '../hooks/useAuth';
 import io from 'socket.io-client';
 import userService from '../services/userService';
 
-// Vercel પર યોગ્ય URL સેટ કરો
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://collaborative-notes-backend.onrender.com';
 const socket = io(API_BASE_URL, {
   autoConnect: false,
@@ -174,13 +173,19 @@ const NoteEditorPage = () => {
       if (id) {
         await noteService.updateNote(id, noteData);
         alert('Note updated successfully!');
+        navigate('/');
       } else {
         await noteService.createNote(noteData);
         alert('Note created successfully!');
         navigate('/');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save note.');
+      const errorMessage = err.response?.data?.message || 'Failed to save note.';
+      if (errorMessage.includes('A note with this title already exists')) {
+        setError('A note with this title already exists. Please choose a different title.');
+      } else {
+        setError(errorMessage);
+      }
       console.error('Error saving note:', err);
     }
   };
