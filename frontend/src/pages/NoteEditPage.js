@@ -4,7 +4,8 @@ import io from 'socket.io-client';
 import noteService from '../services/noteService';
 import { useAuth } from '../hooks/useAuth';
 
-const socket = io('http://localhost:5000', { withCredentials: true });
+// Socket.IO URL ને બેકએન્ડ Render URL સાથે બદલો
+const socket = io('https://collaborative-notes-backend.onrender.com', { withCredentials: true });
 
 function NoteEditPage() {
   const { id } = useParams();
@@ -23,9 +24,13 @@ function NoteEditPage() {
     const fetchNote = async () => {
       try {
         const data = await noteService.getNoteById(id);
+        if (!data) {
+          setError('Note not found.');
+          return;
+        }
         setNote(data);
-        setTitle(data.title);
-        setContent(data.content);
+        setTitle(data.title || '');
+        setContent(data.content || '');
         setTags(data.tags || []);
         setIsPublic(data.isPublic || false);
         setCollaborators(data.collaborators || []);
@@ -37,28 +42,36 @@ function NoteEditPage() {
     fetchNote();
 
     // Socket.IO ઇવેન્ટ્સ
-    socket.emit('start_editing', { noteId: id, userId: user.id, userName: user.username });
+    if (user && user.id && user.username) {
+      socket.emit('start_editing', { noteId: id, userId: user.id, userName: user.username });
 
-    socket.on('user_editing', ({ noteId, userId, userName }) => {
-      if (noteId === id) {
-        setEditingUsers((prev) => [...prev, { userId, userName }]);
-      }
-    });
+      socket.on('user_editing', ({ noteId, userId, userName }) => {
+        if (noteId === id) {
+          setEditingUsers((prev) => {
+            // ડુપ્લિકેટ યુઝર્સ ન ઉમેરાય તે માટે ચેક
+            if (prev.some((u) => u.userId === userId)) return prev;
+            return [...prev, { userId, userName }];
+          });
+        }
+      });
 
-    socket.on('update_note_content', ({ noteId, content }) => {
-      if (noteId === id) {
-        setContent(content);
-      }
-    });
+      socket.on('update_note_content', ({ noteId, content }) => {
+        if (noteId === id) {
+          setContent(content);
+        }
+      });
 
-    socket.on('user_stopped_editing', ({ noteId, userId }) => {
-      if (noteId === id) {
-        setEditingUsers((prev) => prev.filter((u) => u.userId !== userId));
-      }
-    });
+      socket.on('user_stopped_editing', ({ noteId, userId }) => {
+        if (noteId === id) {
+          setEditingUsers((prev) => prev.filter((u) => u.userId !== userId));
+        }
+      });
+    }
 
     return () => {
-      socket.emit('stop_editing', { noteId: id, userId: user.id });
+      if (user && user.id) {
+        socket.emit('stop_editing', { noteId: id, userId: user.id });
+      }
       socket.disconnect();
     };
   }, [id, user, navigate]);
@@ -71,12 +84,17 @@ function NoteEditPage() {
 
   const handleSave = async () => {
     try {
+      // Collaborators ને યુઝર ObjectId એરે તરીકે મોકલો
+      const collaboratorIds = collaborators
+        .filter((collab) => collab._id) // ખાતરી કરો કે _id ઉપલબ્ધ છે
+        .map((collab) => collab._id);
+
       await noteService.updateNote(id, {
         title,
         content,
         tags,
         isPublic,
-        collaborators,
+        collaborators: collaboratorIds, // ObjectId એરે મોકલો
       });
       navigate('/dashboard');
     } catch (err) {
@@ -85,8 +103,8 @@ function NoteEditPage() {
     }
   };
 
-  if (!note) return <div className="text-center mt-8">Loading...</div>;
   if (error) return <div className="text-center text-red-500 mt-8">{error}</div>;
+  if (!note) return <div className="text-center mt-8">Loading...</div>;
 
   return (
     <div className="container mx-auto p-4">
@@ -125,7 +143,7 @@ function NoteEditPage() {
           <input
             type="text"
             value={tags.join(', ')}
-            onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()))}
+            onChange={(e) => setTags(e.target.value.split(',').map((tag) => tag.trim()))}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -133,23 +151,47 @@ function NoteEditPage() {
         <div className="mb-4">
           <label className="block text-gray-700 font-semibold mb-2">Visibility</label>
           <select
-            value={isPublic}
+            value={isPublic.toString()} // Boolean ને સ્ટ્રિંગમાં કન્વર્ટ કરો
             onChange={(e) => setIsPublic(e.target.value === 'true')}
             className="w-full p-2 border rounded"
           >
-            <option value={false}>Private</option>
-            <option value={true}>Public</option>
+            <option value="false">Private</option>
+            <option value="true">Public</option>
           </select>
         </div>
 
         <div className="mb-4">
-          <label className="block text-gray-700 font-semibold mb-2">Collaborators (usernames, comma separated)</label>
+          <label className="block text-gray-700 font-semibold mb-2">
+            Collaborators (usernames, comma separated)
+          </label>
           <input
             type="text"
-            value={collaborators.map(c => c.username).join(', ')}
-            onChange={(e) => {
-              const usernames = e.target.value.split(',').map(u => u.trim());
-              setCollaborators(usernames.map(username => ({ username })));
+            value={collaborators.map((c) => c.username).join(', ')}
+            onChange={async (e) => {
+              const usernames = e.target.value.split(',').map((u) => u.trim());
+              try {
+                // યુઝરનેમ્સને ObjectId માં કન્વર્ટ કરવા માટે બેકએન્ડ API કોલ
+                const response = await fetch(
+                  'https://collaborative-notes-backend.onrender.com/api/users/usernames-to-ids',
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ usernames }),
+                  }
+                );
+                const data = await response.json();
+                if (response.ok) {
+                  setCollaborators(data.users || []); // [{ _id, username }, ...]
+                } else {
+                  setError('Failed to fetch collaborator IDs.');
+                }
+              } catch (err) {
+                setError('Error fetching collaborator IDs.');
+                console.error('Error fetching collaborator IDs:', err);
+              }
             }}
             className="w-full p-2 border rounded"
           />
