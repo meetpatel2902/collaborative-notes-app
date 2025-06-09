@@ -48,7 +48,6 @@ function NoteEditPage() {
       socket.on('user_editing', ({ noteId, userId, userName }) => {
         if (noteId === id) {
           setEditingUsers((prev) => {
-            // ડુપ્લિકેટ યુઝર્સ ન ઉમેરાય તે માટે ચેક
             if (prev.some((u) => u.userId === userId)) return prev;
             return [...prev, { userId, userName }];
           });
@@ -84,9 +83,8 @@ function NoteEditPage() {
 
   const handleSave = async () => {
     try {
-      // Collaborators ને યુઝર ObjectId એરે તરીકે મોકલો
       const collaboratorIds = collaborators
-        .filter((collab) => collab._id) // ખાતરી કરો કે _id ઉપલબ્ધ છે
+        .filter((collab) => collab._id)
         .map((collab) => collab._id);
 
       await noteService.updateNote(id, {
@@ -94,7 +92,7 @@ function NoteEditPage() {
         content,
         tags,
         isPublic,
-        collaborators: collaboratorIds, // ObjectId એરે મોકલો
+        collaborators: collaboratorIds,
       });
       navigate('/dashboard');
     } catch (err) {
@@ -151,7 +149,7 @@ function NoteEditPage() {
         <div className="mb-4">
           <label className="block text-gray-700 font-semibold mb-2">Visibility</label>
           <select
-            value={isPublic.toString()} // Boolean ને સ્ટ્રિંગમાં કન્વર્ટ કરો
+            value={isPublic.toString()}
             onChange={(e) => setIsPublic(e.target.value === 'true')}
             className="w-full p-2 border rounded"
           >
@@ -170,7 +168,6 @@ function NoteEditPage() {
             onChange={async (e) => {
               const usernames = e.target.value.split(',').map((u) => u.trim());
               try {
-                // યુઝરનેમ્સને ObjectId માં કન્વર્ટ કરવા માટે બેકએન્ડ API કોલ
                 const response = await fetch(
                   'https://collaborative-notes-backend.onrender.com/api/users/usernames-to-ids',
                   {
@@ -184,7 +181,7 @@ function NoteEditPage() {
                 );
                 const data = await response.json();
                 if (response.ok) {
-                  setCollaborators(data.users || []); // [{ _id, username }, ...]
+                  setCollaborators(data.users || []);
                 } else {
                   setError('Failed to fetch collaborator IDs.');
                 }
