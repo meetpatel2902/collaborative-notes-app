@@ -10,7 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import NoteEditorPage from './pages/NoteEditorPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import NotFoundPage from './pages/NotFoundPage';
-
+import NoteEditPage from './pages/NoteEditPage';
 
 
 function App() {
@@ -20,15 +20,14 @@ function App() {
                 <Header />
                 <main className="p-4 bg-gray-100 min-h-[calc(100vh-64px)]">
                     <Routes>
+                        <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/notes/:id" element={<NoteEditPage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/signup" element={<SignupPage />} />
-
                         <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
                         <Route path="/notes/:id" element={<PrivateRoute><NoteEditorPage /></PrivateRoute>} />
                         <Route path="/create-note" element={<PrivateRoute><NoteEditorPage /></PrivateRoute>} />
-
                         <Route path="/admin/users" element={<AdminRoute><AdminPanelPage /></AdminRoute>} />
-
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
