@@ -1,8 +1,5 @@
 const express = require('express');
 const Note = require('../models/Note');
-
-
-const express = require('express');
 const Note = require('../models/Note');
 const User = require('../models/User');
 
