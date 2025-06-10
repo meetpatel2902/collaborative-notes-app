@@ -9,7 +9,6 @@ const noteSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
-        unique: true,
     },
     content: {
         type: String,
@@ -26,6 +25,7 @@ const noteSchema = new mongoose.Schema({
     collaborators: [{ 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        default: [],
     }],
     lockedBy: { 
         type: mongoose.Schema.Types.ObjectId,

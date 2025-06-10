@@ -2,10 +2,15 @@ const express = require('express');
 const Note = require('../models/Note');
 const User = require('../models/User');
 
-// Get all notes (with population)
 exports.getNotes = async (req, res) => {
     try {
-        const notes = await Note.find()
+        const userId = req.user._id;
+        const notes = await Note.find({
+            $or: [
+                { owner: userId },
+                { collaborators: userId }
+            ]
+        })
             .populate('owner', 'username')
             .populate('collaborators', 'username')
             .sort({ updatedAt: -1 });
@@ -16,7 +21,6 @@ exports.getNotes = async (req, res) => {
     }
 };
 
-// Get note by ID (with population and authorization)
 exports.getNoteById = async (req, res) => {
     try {
         const note = await Note.findById(req.params.id)
@@ -27,8 +31,10 @@ exports.getNoteById = async (req, res) => {
             return res.status(404).json({ message: 'Note not found' });
         }
 
-        const isOwner = note.owner.toString() === req.user._id.toString();
-        const isCollaborator = note.collaborators.some(collabId => collabId.toString() === req.user._id.toString());
+       
+        const isOwner = note.owner && note.owner._id && note.owner._id.equals(req.user._id);
+        const isCollaborator = note.collaborators.some(collab => collab._id && collab._id.equals(req.user._id));
+
 
         if (!note.isPublic && !isOwner && !isCollaborator && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Not authorized to view this note' });
@@ -41,7 +47,6 @@ exports.getNoteById = async (req, res) => {
     }
 };
 
-// Create a new note
 exports.createNote = async (req, res) => {
     const { title, content, tags, isPublic, collaborators } = req.body;
 
@@ -74,7 +79,6 @@ exports.createNote = async (req, res) => {
     }
 };
 
-// Update a note
 exports.updateNote = async (req, res) => {
     const { title, content, tags, isPublic, collaborators } = req.body;
 
@@ -85,8 +89,9 @@ exports.updateNote = async (req, res) => {
             return res.status(404).json({ message: 'Note not found' });
         }
 
-        const isOwner = note.owner.toString() === req.user._id.toString();
-        const isCollaborator = note.collaborators.some(collabId => collabId.toString() === req.user._id.toString());
+        
+        const isOwner = note.owner && note.owner._id && note.owner._id.equals(req.user._id);
+        const isCollaborator = note.collaborators.some(collab => collab._id && collab._id.equals(req.user._id));
 
         if (!isOwner && !isCollaborator && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Forbidden: You do not have permission to update this note.' });
@@ -129,7 +134,6 @@ exports.updateNote = async (req, res) => {
     }
 };
 
-// Delete a note
 exports.deleteNote = async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
@@ -138,11 +142,12 @@ exports.deleteNote = async (req, res) => {
             return res.status(404).json({ message: 'Note not found' });
         }
 
-        if (note.owner.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+      
+        if (note.owner && note.owner._id && !note.owner._id.equals(req.user._id) && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Not authorized to delete this note' });
         }
 
-        if (note.lockedBy && note.lockedBy.toString() !== req.user._id.toString()) {
+        if (note.lockedBy && !note.lockedBy.equals(req.user._id)) { 
             const lockedByUser = await User.findById(note.lockedBy);
             return res.status(409).json({
                 message: `Note is currently locked by ${lockedByUser ? lockedByUser.username : 'another user'}. Cannot delete.`,

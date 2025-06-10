@@ -1,4 +1,4 @@
-// backend/middleware/authMiddleware.js
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -8,6 +8,8 @@ if (!JWT_SECRET) {
     console.error('FATAL ERROR: JWT_SECRET is not defined in .env file.');
     process.exit(1);
 }
+
+
 
 exports.protect = async (req, res, next) => {
     let token;
