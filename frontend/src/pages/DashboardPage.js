@@ -111,7 +111,7 @@ function DashboardPage() {
                   View/Edit
                 </button>
 
-                {user && note.owner && (note.owner._id === user.id || user.role === 'Admin') && (
+                {user && note.owner && (note.owner._id === user._id || user.role === 'Admin') && (
                   <button
                     onClick={() => handleDeleteNote(note._id)}
                     className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors duration-200"

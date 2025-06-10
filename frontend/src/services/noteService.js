@@ -5,7 +5,7 @@ const getNotes = async () => {
     const response = await api.get('/notes');
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('Error fetching notes:', error); // લોગ ઉમેરો
+    console.error('Error fetching notes:', error); 
     throw new Error(error.response?.data?.message || 'Failed to fetch notes');
   }
 };
